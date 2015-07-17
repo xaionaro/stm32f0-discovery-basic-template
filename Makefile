@@ -6,6 +6,8 @@ PROJ_NAME=main
 
 # Location of the Libraries folder from the STM32F0xx Standard Peripheral Library
 STD_PERIPH_LIB=Libraries
+STD_PERIPH_UTILITIES=Utilities
+STD_PERIPH_EXAMPLES=Project/STM32F0xx_StdPeriph_Examples
 
 # Location of the linker scripts
 LDSCRIPT_INC=Device/ldscripts
@@ -25,7 +27,7 @@ OBJCOPY=arm-none-eabi-objcopy
 OBJDUMP=arm-none-eabi-objdump
 SIZE=arm-none-eabi-size
 
-CFLAGS  = -Wall -g -std=c99 -Os  
+CFLAGS ?= -Wall -g -std=c99 -Os -flto
 #CFLAGS += -mlittle-endian -mthumb -mcpu=cortex-m0 -march=armv6s-m
 CFLAGS += -mlittle-endian -mcpu=cortex-m0  -march=armv6-m -mthumb
 CFLAGS += -ffunction-sections -fdata-sections
@@ -54,10 +56,16 @@ OBJS = $(SRCS:.c=.o)
 
 .PHONY: lib proj
 
-all: lib proj
+all: lib utilities examples proj
 
 lib:
 	$(MAKE) -C $(STD_PERIPH_LIB)
+
+utilities:
+	$(MAKE) -C $(STD_PERIPH_UTILITIES)
+
+examples:
+	$(MAKE) -C $(STD_PERIPH_EXAMPLES)
 
 proj: 	$(PROJ_NAME).elf
 
@@ -72,13 +80,13 @@ program: $(PROJ_NAME).bin
 	openocd -f $(OPENOCD_BOARD_DIR)/stm32f0discovery.cfg -f $(OPENOCD_PROC_FILE) -c "stm_flash `pwd`/$(PROJ_NAME).bin" -c shutdown
 
 clean:
-	find ./ -name '*~' | xargs rm -f	
+	find ./ -name '*~' | xargs rm -f
 	rm -f *.o
 	rm -f $(PROJ_NAME).elf
 	rm -f $(PROJ_NAME).hex
 	rm -f $(PROJ_NAME).bin
 	rm -f $(PROJ_NAME).map
 	rm -f $(PROJ_NAME).lst
-
-reallyclean: clean
 	$(MAKE) -C $(STD_PERIPH_LIB) clean
+	$(MAKE) -C $(STD_PERIPH_UTILITIES) clean
+	$(MAKE) -C $(STD_PERIPH_EXAMPLES) clean
